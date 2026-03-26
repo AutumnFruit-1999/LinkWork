@@ -15,20 +15,20 @@ Each component maintains its own version independently.
 - Initial open-source release of the core scheduling engine
 
 ### linkwork-executor
-- Planned: secure command execution sandbox
+- Initial open-source release of the secure command execution sandbox
 
 ### linkwork-agent-sdk
-- Planned: Agent runtime with LLM orchestration and MCP integration
+- Initial open-source release of the Agent runtime with LLM orchestration and MCP integration
 
 ### linkwork-mcp-gateway
-- Planned: MCP tool proxy with auth and usage metering
+- Initial open-source release of the MCP tool proxy with auth and usage metering
 
 ### linkwork-web
-- Planned: Frontend reference implementation
+- Initial open-source release of the frontend reference implementation
 
 ---
 
-## [0.1.0] - 2026-03-xx
+## [0.1.0] - 2026-03-26
 
 ### linkwork-server
 #### Added

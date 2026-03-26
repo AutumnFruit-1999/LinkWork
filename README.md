@@ -125,23 +125,21 @@ Projects like OpenClaw are excellent personal AI assistants — running on your 
 
 | Component | Description | Status |
 |-----------|-------------|--------|
-| **linkwork-server** | Core backend — task scheduling, role management, approvals, Skills & tool registry | Coming soon |
-| **linkwork-executor** | Secure executor — in-container command execution, policy engine | Coming soon |
-| **linkwork-agent-sdk** | Agent runtime — LLM engine, Skills orchestration, MCP integration | Coming soon |
-| **linkwork-mcp-gateway** | MCP tool gateway — tool discovery, auth, usage metering | Coming soon |
-| **linkwork-web** | Frontend reference — task dashboard, role config, Skills marketplace | Coming soon |
+| **[linkwork-server](https://github.com/momotech/linkwork-server)** | Core backend — task scheduling, role management, approvals, Skills & tool registry | Open sourced |
+| **[linkwork-executor](https://github.com/momotech/linkwork-executor)** | Secure executor — in-container command execution, policy engine | Open sourced |
+| **[linkwork-agent-sdk](https://github.com/momotech/linkwork-agent-sdk)** | Agent runtime — LLM engine, Skills orchestration, MCP integration | Open sourced |
+| **[linkwork-mcp-gateway](https://github.com/momotech/linkwork-mcp-gateway)** | MCP tool gateway — tool discovery, auth, usage metering | Open sourced |
+| **[linkwork-web](https://github.com/momotech/linkwork-web)** | Frontend reference — task dashboard, role config, Skills marketplace | Open sourced |
 
 ## Open-source Roadmap
 
-LinkWork follows a **phased open-source** strategy, ensuring each component is independently usable and well-documented:
+All components have been fully open-sourced as of March 2026:
 
-| Phase | Components | Description | ETA |
-|-------|-----------|-------------|-----|
-| Phase 1 | linkwork-server | Backend core with full scheduling engine and demo launcher | Late March 2026 |
-| Phase 2 | linkwork-executor + linkwork-agent-sdk | Execution layer — secure executor + Agent runtime | Late March 2026 |
-| Phase 3 | linkwork-mcp-gateway + linkwork-web | Access layer — MCP tool gateway + frontend reference implementation | End of March 2026 |
-
-> All components are planned to be fully open-sourced before April 1, 2026. Watch this repo for updates.
+| Phase | Components | Description | Date |
+|-------|-----------|-------------|------|
+| Phase 1 | linkwork-server | Backend core with full scheduling engine and demo launcher | March 2026 |
+| Phase 2 | linkwork-executor + linkwork-agent-sdk | Execution layer — secure executor + Agent runtime | March 2026 |
+| Phase 3 | linkwork-mcp-gateway + linkwork-web | Access layer — MCP tool gateway + frontend reference implementation | March 2026 |
 
 ## Documentation
 
@@ -165,7 +163,7 @@ LinkWork follows a **phased open-source** strategy, ensuring each component is i
 
 ## Stay Connected
 
-All components are planned to be fully open-sourced before April 1, 2026. If you're interested in enterprise AI workforce management:
+All components have been open-sourced. If you're interested in enterprise AI workforce management:
 
 - **Star** this repo to track progress
 - **Watch** for release notifications
