@@ -1,0 +1,15 @@
+[submodule "linkwork-server"]
+	path = linkwork-server
+	url = https://github.com/momotech/linkwork-server.git
+[submodule "linkwork-executor"]
+	path = linkwork-executor
+	url = https://github.com/momotech/linkwork-executor.git
+[submodule "linkwork-agent-sdk"]
+	path = linkwork-agent-sdk
+	url = https://github.com/momotech/linkwork-agent-sdk.git
+[submodule "linkwork-mcp-gateway"]
+	path = linkwork-mcp-gateway
+	url = https://github.com/momotech/linkwork-mcp-gateway.git
+[submodule "linkwork-web"]
+	path = linkwork-web
+	url = https://github.com/momotech/linkwork-web.git
