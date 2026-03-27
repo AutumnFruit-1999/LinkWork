@@ -30,6 +30,12 @@ LinkWork/
 │   ├── ISSUE_TEMPLATE/       # Issue 模板 (bug / feature)
 │   ├── pull_request_template.md
 │   └── CODEOWNERS
+├── backend/                  # [submodule] linkwork-backend — Spring Boot 后端应用
+├── linkwork-server/          # [submodule] 核心调度引擎 (Java)
+├── linkwork-executor/        # [submodule] 安全执行器 (Go)
+├── linkwork-agent-sdk/       # [submodule] Agent 运行时 (Python)
+├── linkwork-mcp-gateway/     # [submodule] MCP 工具网关 (Go)
+├── linkwork-web/             # [submodule] 前端参考实现 (Vue 3)
 ├── docs/                     # 项目文档（中文，_zh-CN 后缀）
 │   ├── README_zh-CN.md       # 文档导航索引
 │   ├── quick-start_zh-CN.md  # 快速开始

@@ -129,6 +129,7 @@ Projects like OpenClaw are excellent personal AI assistants — running on your 
 | **[linkwork-executor](https://github.com/momotech/linkwork-executor)** | Secure executor — in-container command execution, policy engine | Open sourced |
 | **[linkwork-agent-sdk](https://github.com/momotech/linkwork-agent-sdk)** | Agent runtime — LLM engine, Skills orchestration, MCP integration | Open sourced |
 | **[linkwork-mcp-gateway](https://github.com/momotech/linkwork-mcp-gateway)** | MCP tool gateway — tool discovery, auth, usage metering | Open sourced |
+| **[linkwork-backend](https://github.com/momotech/linkwork-backend)** | Backend application — Spring Boot service integrating linkwork-server starters, image build, and task orchestration | Open sourced |
 | **[linkwork-web](https://github.com/momotech/linkwork-web)** | Frontend reference — task dashboard, role config, Skills marketplace | Open sourced |
 
 ## Open-source Roadmap
