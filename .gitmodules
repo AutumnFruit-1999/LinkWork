@@ -13,3 +13,7 @@
 [submodule "linkwork-web"]
 	path = linkwork-web
 	url = https://github.com/momotech/linkwork-web.git
+[submodule "backend"]
+	path = backend
+	url = https://github.com/momotech/linkwork-backend.git
+	branch = master
