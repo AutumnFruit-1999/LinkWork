@@ -158,6 +158,12 @@ All components have been fully open-sourced as of March 2026:
 
 > Full documentation index: [docs/README.md](./docs/README.md)
 
+## GitHub Star Growth
+
+Track LinkWork's real-time GitHub star growth with the live Star History chart:
+
+[![Star History Chart](https://api.star-history.com/svg?repos=momotech/LinkWork&type=Date)](https://star-history.com/#momotech/LinkWork&Date)
+
 ## License
 
 [Apache License 2.0](./LICENSE)
