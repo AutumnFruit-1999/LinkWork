@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwork-backend
+  namespace: linkwork
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: linkwork-backend
+          imagePullPolicy: Never
+          env:
+            - name: IMAGE_AUTO_LOAD_TO_KIND
+              value: "true"
+            - name: IMAGE_PULL_POLICY
+              value: "Never"
+            - name: LINKWORK_SANDBOX_PROVIDER
+              value: "k8s-volcano"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwork-mcp-gateway
+  namespace: linkwork
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: linkwork-mcp-gateway
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwork-web
+  namespace: linkwork
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: linkwork-web
+          imagePullPolicy: Never

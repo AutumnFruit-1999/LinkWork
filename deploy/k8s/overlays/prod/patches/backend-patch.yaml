@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwork-backend
+  namespace: linkwork
+spec:
+  replicas: 2
+  template:
+    spec:
+      imagePullSecrets:
+        - name: linkwork-registry-secret
+      containers:
+        - name: linkwork-backend
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LINKWORK_SANDBOX_PROVIDER
+              value: "k8s-volcano"
+            - name: IMAGE_PULL_POLICY
+              value: "IfNotPresent"
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwork-mcp-gateway
+  namespace: linkwork
+spec:
+  replicas: 2
+  template:
+    spec:
+      imagePullSecrets:
+        - name: linkwork-registry-secret
+      containers:
+        - name: linkwork-mcp-gateway
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwork-web
+  namespace: linkwork
+spec:
+  replicas: 2
+  template:
+    spec:
+      imagePullSecrets:
+        - name: linkwork-registry-secret
+      containers:
+        - name: linkwork-web
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

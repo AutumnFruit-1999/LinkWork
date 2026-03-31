@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: linkwork-initdb
+  namespace: linkwork
+data:
+  001-schema.sql: |
+    -- TODO: 替换为实际 DDL
+    -- 数据库 linkwork 已由 MYSQL_DATABASE 创建
+    -- 字符集 utf8mb4, 主键 BIGINT, 逻辑删除 is_deleted TINYINT DEFAULT 0

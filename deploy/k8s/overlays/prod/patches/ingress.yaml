@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: linkwork-ingress
+  namespace: linkwork
+  labels:
+    app.kubernetes.io/part-of: linkwork
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/websocket-services: linkwork-backend
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - linkwork.example.com
+      secretName: linkwork-tls
+  rules:
+    - host: linkwork.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: linkwork-backend
+                port:
+                  number: 8081
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: linkwork-web
+                port:
+                  number: 3003

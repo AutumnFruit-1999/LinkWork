@@ -1,0 +1,281 @@
+# LinkWork Docker 单机部署 — 主编排文件
+# 最小集（默认 6 容器）: mysql + redis + dind + backend + gateway + web
+# 可选 profile:  --profile memory  (etcd + minio + milvus)
+#                --profile llm     (litellm)
+
+networks:
+  linkwork-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  docker-data:
+  workspace-data:
+  etcd-data:
+  minio-data:
+
+# ===================================================================
+#  基础设施层
+# ===================================================================
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: linkwork-mysql
+    restart: unless-stopped
+    networks: [linkwork-net]
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-linkwork_root}
+      MYSQL_DATABASE: linkwork
+      MYSQL_USER: ${LINKWORK_DB_USERNAME:-linkwork}
+      MYSQL_PASSWORD: ${LINKWORK_DB_PASSWORD:-linkwork123}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+      --max-connections=500
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-linkwork_root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: linkwork-redis
+    restart: unless-stopped
+    networks: [linkwork-net]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  dind:
+    image: docker:27-dind
+    container_name: linkwork-dind
+    restart: unless-stopped
+    privileged: true
+    networks: [linkwork-net]
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    volumes:
+      - docker-data:/var/lib/docker
+      - workspace-data:/workspace
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ===================================================================
+  #  平台服务层
+  # ===================================================================
+
+  linkwork-backend:
+    image: linkwork-backend:${LINKWORK_VERSION:-latest}
+    container_name: linkwork-backend
+    build:
+      context: ../../
+      dockerfile: deploy/docker/backend/Dockerfile
+    restart: unless-stopped
+    networks: [linkwork-net]
+    ports:
+      - "${BACKEND_PORT:-8081}:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # 数据库
+      LINKWORK_DB_URL: ${LINKWORK_DB_URL:-jdbc:mysql://mysql:3306/linkwork?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8}
+      LINKWORK_DB_USERNAME: ${LINKWORK_DB_USERNAME:-linkwork}
+      LINKWORK_DB_PASSWORD: ${LINKWORK_DB_PASSWORD:-linkwork123}
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      # Docker
+      DOCKER_HOST: ${DOCKER_HOST:-tcp://dind:2376}
+      # 调度
+      LINKWORK_SANDBOX_PROVIDER: ${LINKWORK_SANDBOX_PROVIDER:-compose}
+      IMAGE_PULL_POLICY: ${IMAGE_PULL_POLICY:-Never}
+      IMAGE_REGISTRY: ${IMAGE_REGISTRY:-}
+      IMAGE_AUTO_LOAD_TO_KIND: "false"
+      OSS_MOUNT_ENABLED: ${OSS_MOUNT_ENABLED:-false}
+      # 服务间通信
+      API_BASE_URL: ${API_BASE_URL:-http://linkwork-backend:8081}
+      WS_BASE_URL: ${WS_BASE_URL:-ws://linkwork-backend:8081}
+      LLM_GATEWAY_URL: ${LLM_GATEWAY_URL:-http://litellm:4000}
+      REDIS_URL: redis://redis:6379
+      # Memory
+      MEMORY_ENABLED: ${MEMORY_ENABLED:-false}
+      MILVUS_URI: ${MILVUS_URI:-http://milvus:19530}
+      # LLM
+      LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
+      LITELLM_API_KEY: ${LITELLM_API_KEY:-}
+      # 认证
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-}
+      # MCP Gateway
+      LINKWORK_AGENT_MCP_GATEWAY_AGENT_BASE_URL: http://linkwork-mcp-gateway:9080
+      # NFS → Docker volume 映射
+      NFS_STORAGE_BASE_PATH: /workspace
+      # 可选 starter 开关
+      LINKWORK_AGENT_SKILL_ENABLED: ${LINKWORK_AGENT_SKILL_ENABLED:-false}
+    volumes:
+      - workspace-data:/workspace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -so /dev/null -w '%{http_code}' http://localhost:8081/ | grep -qE '^[1-5]'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  linkwork-mcp-gateway:
+    image: linkwork-mcp-gateway:${LINKWORK_VERSION:-latest}
+    container_name: linkwork-mcp-gateway
+    build:
+      context: ../../linkwork-mcp-gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks: [linkwork-net]
+    ports:
+      - "${GATEWAY_PORT:-9080}:9080"
+    depends_on:
+      linkwork-backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      WEB_SERVICE_BASE_URL: ${WEB_SERVICE_BASE_URL:-http://linkwork-backend:8081}
+      REDIS_ADDR: ${REDIS_ADDR:-redis:6379}
+      GATEWAY_PORT: "9080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9080/health", "||", "true"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  linkwork-web:
+    image: linkwork-web:${LINKWORK_VERSION:-latest}
+    container_name: linkwork-web
+    build:
+      context: ../../
+      dockerfile: deploy/docker/web/Dockerfile
+    restart: unless-stopped
+    networks: [linkwork-net]
+    ports:
+      - "${WEB_PORT:-3003}:3003"
+    depends_on:
+      linkwork-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3003/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===================================================================
+  #  增强层 — profile: memory（Milvus 向量记忆）
+  # ===================================================================
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.16
+    container_name: linkwork-etcd
+    profiles: [memory]
+    restart: unless-stopped
+    networks: [linkwork-net]
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    volumes:
+      - etcd-data:/etcd
+    command:
+      - etcd
+      - --advertise-client-urls=http://0.0.0.0:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --data-dir=/etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    container_name: linkwork-minio
+    profiles: [memory]
+    restart: unless-stopped
+    networks: [linkwork-net]
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    volumes:
+      - minio-data:/data
+    command: minio server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  milvus:
+    image: milvusdb/milvus:v2.4.17
+    container_name: linkwork-milvus
+    profiles: [memory]
+    restart: unless-stopped
+    networks: [linkwork-net]
+    ports:
+      - "${MILVUS_PORT:-19530}:19530"
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    command: ["milvus", "run", "standalone"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ===================================================================
+  #  增强层 — profile: llm（LLM 统一网关）
+  # ===================================================================
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: linkwork-litellm
+    profiles: [llm]
+    restart: unless-stopped
+    networks: [linkwork-net]
+    ports:
+      - "${LITELLM_PORT:-4000}:4000"
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s

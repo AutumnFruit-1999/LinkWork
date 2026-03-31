@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: linkwork-config
+  namespace: linkwork
+data:
+  # 数据库
+  LINKWORK_DB_URL: "jdbc:mysql://mysql:3306/linkwork?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8"
+  LINKWORK_DB_USERNAME: "linkwork"
+  LINKWORK_DB_PASSWORD: "linkwork123"
+
+  # Redis
+  REDIS_HOST: "redis"
+
+  # Docker
+  DOCKER_HOST: "unix:///var/run/docker.sock"
+
+  # 调度
+  LINKWORK_SANDBOX_PROVIDER: "k8s-volcano"
+  IMAGE_PULL_POLICY: "IfNotPresent"
+
+  # 服务间通信
+  API_BASE_URL: "http://linkwork-backend:8081"
+  WS_BASE_URL: "ws://linkwork-backend:8081"
+  LLM_GATEWAY_URL: "http://litellm:4000"
+  REDIS_URL: "redis://redis:6379"
+
+  # MCP Gateway
+  WEB_SERVICE_BASE_URL: "http://linkwork-backend:8081"
+  REDIS_ADDR: "redis:6379"
+  LINKWORK_AGENT_MCP_GATEWAY_AGENT_BASE_URL: "http://linkwork-mcp-gateway:9080"
+
+  # Memory（base 默认关闭）
+  MEMORY_ENABLED: "false"
+  MILVUS_URI: "http://milvus:19530"
+
+  # OSS
+  OSS_MOUNT_ENABLED: "false"
+
+  # NFS
+  NFS_STORAGE_BASE_PATH: "/mnt/oss/agent-files"
