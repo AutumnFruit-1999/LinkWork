@@ -55,28 +55,53 @@ git submodule update --init --recursive
 
 ## 第二步：配置环境变量
 
-> 当前各组件的配置项尚未完全抽离为统一的外部配置，此部分后续会持续完善。目前请参考各组件内的默认配置文件。
+Docker Compose 配置目录中提供了环境变量模板：
+
+```bash
+cd deploy/docker
+cp .env.example .env
+```
+
+编辑 `.env`，至少填写以下必填项：
+
+| 变量 | 说明 |
+|------|------|
+| `MYSQL_ROOT_PASSWORD` | MySQL root 密码 |
+| `AUTH_JWT_SECRET` | JWT 签名密钥（建议 32 位以上） |
+| `AUTH_PASSWORD` | 默认管理员密码（BCrypt 哈希，`$` 需转义为 `$$`） |
+
+所有可用变量及详细说明参见 [`.env.example`](../deploy/docker/.env.example)。
 
 ---
 
 ## 第三步：启动平台服务（开发模式）
 
-平台服务（后端 + 前端）可通过 Docker Compose 在本地快速启动：
+在 `deploy/docker/` 目录下，一条命令启动所有核心服务：
 
 ```bash
 docker compose up -d
 ```
 
-启动后的服务端口：
+此命令会启动 MySQL、Redis、后端、MCP 网关和前端。启动后的服务端口：
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| linkwork-server | 8081 | 后端 API |
+| mysql | 3306 | 数据存储 |
+| redis | 6379 | 队列与缓存 |
+| linkwork-backend | 8081 | 后端 API |
+| linkwork-mcp-gateway | 8082 | MCP 工具网关 |
 | linkwork-web | 3003 | 前端界面 |
 
 访问 `http://localhost:3003` 可打开 LinkWork 管理界面。
 
-> 注意：此模式下只有平台管理功能可用。AI 员工的创建、调度和执行需要完整的 K8s 基础设施支持。
+检查服务状态：
+
+```bash
+docker compose ps        # 所有服务应显示 "healthy" 或 "running"
+docker compose logs -f   # 查看实时日志排查问题
+```
+
+> 注意：此模式下只有平台管理功能可用。AI 员工的创建、调度和执行需要完整的 K8s 基础设施支持。生产部署请参见 [部署指南](./guides/deployment_zh-CN.md)。
 
 ---
 

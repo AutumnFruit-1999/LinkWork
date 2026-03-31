@@ -55,28 +55,53 @@ Submodule structure:
 
 ## Step 2: Configure Environment Variables
 
-> Configuration items are not yet fully externalized into a unified config. This will be improved over time. For now, refer to the default configuration files within each component.
+A ready-to-use environment template is provided in the Docker Compose setup:
+
+```bash
+cd deploy/docker
+cp .env.example .env
+```
+
+Edit `.env` and fill in the required values (at minimum):
+
+| Variable | Description |
+|----------|-------------|
+| `MYSQL_ROOT_PASSWORD` | MySQL root password |
+| `AUTH_JWT_SECRET` | JWT signing secret (32+ characters recommended) |
+| `AUTH_PASSWORD` | Default admin password (BCrypt hash, `$` escaped as `$$`) |
+
+All available variables with documentation are in [`.env.example`](../deploy/docker/.env.example).
 
 ---
 
 ## Step 3: Start Platform Services (Dev Mode)
 
-Platform services (backend + frontend) can be quickly started locally via Docker Compose:
+From the `deploy/docker/` directory, start all core services with a single command:
 
 ```bash
 docker compose up -d
 ```
 
-Service ports after startup:
+This starts MySQL, Redis, the backend, MCP gateway, and the web frontend. Service ports after startup:
 
 | Service | Port | Description |
 |---------|------|-------------|
-| linkwork-server | 8081 | Backend API |
+| mysql | 3306 | Data storage |
+| redis | 6379 | Queues and caching |
+| linkwork-backend | 8081 | Backend API |
+| linkwork-mcp-gateway | 8082 | MCP tool gateway |
 | linkwork-web | 3003 | Frontend UI |
 
 Visit `http://localhost:3003` to open the LinkWork management interface.
 
-> Note: Only platform management features are available in this mode. Creating, scheduling, and executing AI workers requires full K8s infrastructure support.
+Check service health:
+
+```bash
+docker compose ps        # all services should be "healthy" or "running"
+docker compose logs -f   # stream logs for troubleshooting
+```
+
+> Note: Only platform management features are available in this mode. Creating, scheduling, and executing AI workers requires full K8s infrastructure support. See the [Deployment Guide](./guides/deployment.md) for production setup.
 
 ---
 

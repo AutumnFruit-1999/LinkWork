@@ -1,0 +1,15 @@
+# 开发覆盖：挂载宿主机 Docker Socket，禁用 DinD 容器
+# 使用方式（默认自动加载）:
+#   docker compose up -d
+# 跳过此文件（使用 DinD 模式）:
+#   docker compose -f docker-compose.yml up -d
+
+services:
+  dind:
+    profiles: [disabled]
+
+  linkwork-backend:
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

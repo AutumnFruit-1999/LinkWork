@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: linkwork-backend
+  namespace: linkwork
+  labels:
+    app.kubernetes.io/name: linkwork-backend
+    app.kubernetes.io/part-of: linkwork
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8081
+      targetPort: 8081
+  selector:
+    app.kubernetes.io/name: linkwork-backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkwork-backend
+  namespace: linkwork
+  labels:
+    app.kubernetes.io/name: linkwork-backend
+    app.kubernetes.io/part-of: linkwork
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: linkwork-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: linkwork-backend
+        app.kubernetes.io/part-of: linkwork
+    spec:
+      containers:
+        - name: linkwork-backend
+          image: linkwork-backend:latest
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: linkwork-config
+          env:
+            - name: DOCKER_HOST
+              value: "unix:///var/run/docker.sock"
+            - name: LINKWORK_SANDBOX_PROVIDER
+              value: "k8s-volcano"
+          volumeMounts:
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket

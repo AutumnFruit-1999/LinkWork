@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: linkwork-config
+  namespace: linkwork
+data:
+  IMAGE_PULL_POLICY: "Never"
+  IMAGE_REGISTRY: ""
+  IMAGE_AUTO_LOAD_TO_KIND: "true"
+  OSS_MOUNT_ENABLED: "false"
+  MEMORY_ENABLED: "false"

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: linkwork-config
+  namespace: linkwork
+data:
+  # Harbor registry（需替换为实际地址）
+  IMAGE_REGISTRY: "harbor.example.com/linkwork"
+  IMAGE_PULL_POLICY: "IfNotPresent"
+
+  # 启用 Volcano 调度
+  LINKWORK_SANDBOX_PROVIDER: "k8s-volcano"
+
+  # 启用 OSS 挂载和 Memory
+  OSS_MOUNT_ENABLED: "true"
+  MEMORY_ENABLED: "true"
+  MILVUS_URI: "http://milvus:19530"

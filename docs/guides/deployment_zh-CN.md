@@ -201,18 +201,99 @@ curl -X POST http://<linkwork-server>/api/v1/build/ops/local-image-maintenance
 
 ## 开发模式（Docker Compose）
 
-如果只需要启动平台服务（server + web）进行开发调试，可以使用 Docker Compose：
+本地开发或单机体验可使用 [`deploy/docker/`](../../deploy/docker/) 下的完整 Docker Compose 配置。
+
+### 快速启动
 
 ```bash
-docker compose up -d
+cd deploy/docker
+cp .env.example .env          # 编辑密码、JWT 密钥、端口等
+docker compose up -d           # 启动所有核心服务
 ```
 
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| linkwork-server | 8081 | 后端 API |
-| linkwork-web | 3003 | 前端界面 |
+### 服务列表
 
-> 此模式仅用于平台服务的本地开发，AI 员工的创建和执行需要完整的 K8s 基础设施。
+| 服务 | 默认端口 | 说明 |
+|------|---------|------|
+| mysql | 3306 | 业务数据存储 |
+| redis | 6379 | 队列、缓存、数据总线 |
+| linkwork-backend | 8081 | 后端 API（Spring Boot） |
+| linkwork-mcp-gateway | 8082 | MCP 工具网关（Go） |
+| linkwork-web | 3003 | 前端界面（Vite + Nginx） |
+| dind | 2376 | Docker-in-Docker，用于镜像构建 |
+
+### 可选服务（Profile）
+
+通过 Compose profile 启用可选服务：
+
+```bash
+# 记忆扩展（etcd + Minio + Milvus）
+docker compose --profile memory up -d
+
+# LLM 代理（LiteLLM）
+docker compose --profile llm up -d
+
+# 全部可选服务
+docker compose --profile memory --profile llm up -d
+```
+
+### 开发 Socket 模式
+
+默认情况下 `docker-compose.override.yml` 直接挂载宿主机 Docker Socket，跳过 DinD，本地开发更快。如需使用 DinD，重命名或删除 override 文件即可。
+
+### 关键配置
+
+所有环境变量在 `.env.example` 中有详细说明，核心配置：
+
+| 变量 | 说明 |
+|------|------|
+| `MYSQL_ROOT_PASSWORD` | MySQL root 密码 |
+| `AUTH_JWT_SECRET` | JWT 签名密钥（必填） |
+| `LINKWORK_AGENT_SANDBOX_PROVIDER` | `compose`（默认）或 `k8s-volcano` |
+| `MYSQL_PORT` / `REDIS_PORT` | 宿主机端口映射（避免冲突） |
+
+> 完整文档：[`deploy/docker/README.md`](../../deploy/docker/README.md)
+
+---
+
+## Kubernetes 部署（Kustomize）
+
+生产集群使用 [`deploy/k8s/`](../../deploy/k8s/) 下的 Kustomize 清单。
+
+### 目录结构
+
+```
+deploy/k8s/
+├── base/                    # 共享资源（Namespace、StatefulSet、Deployment、ConfigMap）
+└── overlays/
+    ├── dev/                 # Kind/本地：单副本、NodePort、imagePullPolicy Never
+    └── prod/                # 生产：多副本、Ingress+TLS、HPA、imagePullSecrets
+```
+
+### 部署到开发环境（Kind）
+
+```bash
+# 先构建镜像
+docker compose -f deploy/docker/docker-compose.yml build
+kind load docker-image linkwork-backend:latest linkwork-web:latest
+
+# 应用 dev overlay
+kubectl apply -k deploy/k8s/overlays/dev
+```
+
+### 部署到生产环境
+
+```bash
+kubectl apply -k deploy/k8s/overlays/prod
+```
+
+生产 overlay 包含：
+- 多副本 Deployment + HPA 自动扩缩
+- Ingress + TLS 终结
+- `imagePullSecrets` 私有仓库拉取
+- 资源 requests / limits 配置
+
+> 完整文档：[`deploy/k8s/README.md`](../../deploy/k8s/README.md)
 
 ---
 
@@ -220,3 +301,5 @@ docker compose up -d
 
 - [快速开始](../quick-start_zh-CN.md) — 最小化启动体验
 - [扩展开发指南](./extension_zh-CN.md) — 了解岗位和能力扩展
+- [Docker Compose 使用说明](../../deploy/docker/README.md) — 详细的 Docker Compose 用法
+- [Kubernetes 使用说明](../../deploy/k8s/README.md) — 详细的 Kustomize 用法

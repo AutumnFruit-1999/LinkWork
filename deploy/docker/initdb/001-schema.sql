@@ -1,0 +1,22 @@
+-- =============================================================================
+-- LinkWork DDL 占位文件
+-- 请替换为实际的数据库 DDL
+--
+-- 要求:
+--   数据库名: linkwork（已由 MYSQL_DATABASE 环境变量创建）
+--   字符集: utf8mb4
+--   主键类型: BIGINT（MyBatis-Plus assign_id 使用 Snowflake ID）
+--   逻辑删除字段: is_deleted TINYINT DEFAULT 0
+--   JSON 字段使用 JSON 类型
+-- =============================================================================
+
+-- TODO: 将实际 DDL 粘贴到此处
+-- 示例:
+-- CREATE TABLE IF NOT EXISTS `linkwork_user` (
+--   `id` BIGINT NOT NULL,
+--   `username` VARCHAR(64) NOT NULL,
+--   `is_deleted` TINYINT NOT NULL DEFAULT 0,
+--   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+--   PRIMARY KEY (`id`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
