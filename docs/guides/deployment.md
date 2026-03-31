@@ -201,18 +201,99 @@ curl -X POST http://<linkwork-server>/api/v1/build/ops/local-image-maintenance
 
 ## Development Mode (Docker Compose)
 
-If you only need to start the platform services (server + web) for development and debugging, you can use Docker Compose:
+For local development or single-node evaluation, a complete Docker Compose setup is available under [`deploy/docker/`](../../deploy/docker/).
+
+### Quick Start
 
 ```bash
-docker compose up -d
+cd deploy/docker
+cp .env.example .env          # edit passwords, JWT secret, ports, etc.
+docker compose up -d           # start all core services
 ```
 
-| Service | Port | Description |
-|---------|------|-------------|
-| linkwork-server | 8081 | Backend API |
-| linkwork-web | 3003 | Frontend UI |
+### Services
 
-> This mode is only for local development of platform services. Creating and executing AI workers requires full K8s infrastructure.
+| Service | Default Port | Description |
+|---------|-------------|-------------|
+| mysql | 3306 | Business data storage |
+| redis | 6379 | Queues, caching, data bus |
+| linkwork-backend | 8081 | Backend API (Spring Boot) |
+| linkwork-mcp-gateway | 8082 | MCP tool gateway (Go) |
+| linkwork-web | 3003 | Frontend UI (Vite + Nginx) |
+| dind | 2376 | Docker-in-Docker for image builds |
+
+### Optional Services (Profiles)
+
+Enable optional services using Compose profiles:
+
+```bash
+# Memory extensions (etcd + Minio + Milvus)
+docker compose --profile memory up -d
+
+# LLM proxy (LiteLLM)
+docker compose --profile llm up -d
+
+# All optional services
+docker compose --profile memory --profile llm up -d
+```
+
+### Developer Socket Mode
+
+By default, `docker-compose.override.yml` mounts the host Docker socket directly, skipping DinD. This is faster for local development. To use DinD instead, rename or remove the override file.
+
+### Key Configuration
+
+All environment variables are documented in `.env.example`. Key settings:
+
+| Variable | Description |
+|----------|-------------|
+| `MYSQL_ROOT_PASSWORD` | MySQL root password |
+| `AUTH_JWT_SECRET` | JWT signing secret (required) |
+| `LINKWORK_AGENT_SANDBOX_PROVIDER` | `compose` (default) or `k8s-volcano` |
+| `MYSQL_PORT` / `REDIS_PORT` | Host port mappings (avoid conflicts) |
+
+> Full documentation: [`deploy/docker/README.md`](../../deploy/docker/README.md)
+
+---
+
+## Kubernetes Deployment (Kustomize)
+
+For production clusters, Kustomize manifests are available under [`deploy/k8s/`](../../deploy/k8s/).
+
+### Directory Structure
+
+```
+deploy/k8s/
+├── base/                    # Shared resources (namespace, StatefulSets, Deployments, ConfigMaps)
+└── overlays/
+    ├── dev/                 # Kind/local: single replica, NodePort, imagePullPolicy Never
+    └── prod/                # Production: multi-replica, Ingress+TLS, HPA, imagePullSecrets
+```
+
+### Deploy to Dev (Kind)
+
+```bash
+# Build images first
+docker compose -f deploy/docker/docker-compose.yml build
+kind load docker-image linkwork-backend:latest linkwork-web:latest
+
+# Apply dev overlay
+kubectl apply -k deploy/k8s/overlays/dev
+```
+
+### Deploy to Production
+
+```bash
+kubectl apply -k deploy/k8s/overlays/prod
+```
+
+Production overlay includes:
+- Multi-replica deployments with HPA
+- Ingress with TLS termination
+- `imagePullSecrets` for private registry
+- Resource requests and limits
+
+> Full documentation: [`deploy/k8s/README.md`](../../deploy/k8s/README.md)
 
 ---
 
@@ -220,3 +301,5 @@ docker compose up -d
 
 - [Quick Start](../quick-start.md) — Minimal startup experience
 - [Extension Guide](./extension.md) — Learn about role and capability extension
+- [Docker Compose README](../../deploy/docker/README.md) — Detailed Docker Compose usage
+- [Kubernetes README](../../deploy/k8s/README.md) — Detailed Kustomize usage

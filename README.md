@@ -116,7 +116,7 @@ Projects like OpenClaw are excellent personal AI assistants — running on your 
 | **Runtime Env** | Local single machine | K8s cluster, container isolation |
 | **Capability Mgmt** | Community plugins, self-install | Role → Skill → Tool, three-tier governance |
 | **Security** | Relies on user discretion | Approval workflow + policy engine + audit |
-| **Deployment** | `npm install -g` | K8s |
+| **Deployment** | `npm install -g` | Docker Compose (dev) / K8s (prod) |
 | **Skills Reuse** | Personal accumulation, hard to share | Skills proven on personal tools migrate directly in, shared across teams, reliably executed |
 
 > Personal assistants solve "my productivity". LinkWork solves "organizational effectiveness". Skills you've refined on personal tools can go straight into LinkWork, becoming standardized capabilities your entire team can use.
@@ -142,12 +142,40 @@ All components have been fully open-sourced as of March 2026:
 | Phase 2 | linkwork-executor + linkwork-agent-sdk | Execution layer — secure executor + Agent runtime | March 2026 |
 | Phase 3 | linkwork-mcp-gateway + linkwork-web | Access layer — MCP tool gateway + frontend reference implementation | March 2026 |
 
+## Deploy
+
+### Docker Compose (Development / Single Node)
+
+Get the full platform running locally in minutes:
+
+```bash
+cd deploy/docker
+cp .env.example .env          # edit .env to set DB passwords, JWT secret, etc.
+docker compose up -d           # starts MySQL, Redis, backend, web, and more
+```
+
+Open `http://localhost:3003` to access the LinkWork UI. For details see [`deploy/docker/README.md`](./deploy/docker/README.md).
+
+### Kubernetes (Production)
+
+Production deployments use Kustomize overlays under `deploy/k8s/`:
+
+```bash
+# Dev cluster (Kind)
+kubectl apply -k deploy/k8s/overlays/dev
+
+# Production cluster
+kubectl apply -k deploy/k8s/overlays/prod
+```
+
+Requires K8s v1.33+, Volcano, Harbor, and NFS. See [`deploy/k8s/README.md`](./deploy/k8s/README.md) and the full [Deployment Guide](./docs/guides/deployment.md).
+
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
 | [Quick Start](./docs/quick-start.md) | Prerequisites, cloning submodules, launching platform services |
-| [Deployment Guide](./docs/guides/deployment.md) | K8s production deployment, Harbor, MySQL, Volcano |
+| [Deployment Guide](./docs/guides/deployment.md) | Docker Compose dev setup, K8s production deployment |
 | [Extension Guide](./docs/guides/extension.md) | Custom roles, Skills, MCP tools, file management, Git projects |
 | [Workstation Model](./docs/concepts/workstation.md) | Role → Instance → Task model |
 | [Skills System](./docs/concepts/skills.md) | Declarative skills, version pinning, build-time injection |
