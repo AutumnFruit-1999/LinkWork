@@ -1,100 +1,102 @@
-# LinkWork Docker 单机部署
+# LinkWork Docker Single-Node Deployment
 
-## 前置条件
+English | [中文](./README_zh-CN.md)
+
+## Prerequisites
 
 - Docker >= 24.0
 - Docker Compose V2
-- 最低 4 CPU / 8GB RAM / 40GB 磁盘（最小集）
-- 推荐 8 CPU / 16GB RAM / 100GB（含 Milvus）
+- Minimum: 4 CPU / 8 GB RAM / 40 GB disk (minimal stack)
+- Recommended: 8 CPU / 16 GB RAM / 100 GB disk (with Milvus)
 
-## 快速开始
+## Quick Start
 
 ```bash
 cd LinkWork/deploy/docker
 
-# 1. 复制环境变量模板并编辑
+# 1) Copy env template and edit values
 cp .env.example .env
-# 编辑 .env，填写 AUTH_PASSWORD、AUTH_JWT_SECRET、LITELLM_API_KEY 等
+# Edit .env and set AUTH_PASSWORD, AUTH_JWT_SECRET, LITELLM_API_KEY, etc.
 
-# 2. 放入 DDL 文件
-# 将实际 DDL 替换 initdb/001-schema.sql
+# 2) Put your DDL file in place
+# Replace initdb/001-schema.sql with your actual schema file
 
-# 3. 启动最小集（6 容器: mysql + redis + dind + backend + gateway + web）
+# 3) Start minimal stack (6 containers: mysql + redis + dind + backend + gateway + web)
 docker compose -f docker-compose.yml up -d
 
-# 或使用开发模式（挂载宿主机 Docker Socket，自动加载 override）
+# Or use development mode (mount host Docker socket, auto-load override)
 docker compose up -d
 ```
 
-启动后访问:
-- 前端 UI: http://localhost:3003
-- 后端 API: http://localhost:8081
+After startup:
+- Web UI: http://localhost:3003
+- Backend API: http://localhost:8081
 - MCP Gateway: http://localhost:9080
 
-## 启动集合（Profile 控制）
+## Startup Profiles
 
 ```bash
-# 最小集（默认 6 容器）
+# Minimal stack (default, 6 containers)
 docker compose -f docker-compose.yml up -d
 
-# 加 Milvus 向量记忆（+3 容器: etcd + minio + milvus）
+# Enable vector memory (+3 containers: etcd + minio + milvus)
 docker compose -f docker-compose.yml --profile memory up -d
 
-# 加 LLM 网关（+1 容器: litellm）
+# Enable LLM gateway (+1 container: litellm)
 docker compose -f docker-compose.yml --profile llm up -d
 
-# 全部启动（10 容器）
+# Start everything (10 containers)
 docker compose -f docker-compose.yml --profile memory --profile llm up -d
 ```
 
-## Docker Daemon 模式
+## Docker Daemon Modes
 
-### DinD 模式（默认，生产推荐）
+### DinD Mode (Default, Recommended for Production)
 
-仅使用 `docker-compose.yml`（不加载 override）:
+Use only `docker-compose.yml` (do not load override):
 
 ```bash
 docker compose -f docker-compose.yml up -d
 ```
 
-Backend 通过 `tcp://dind:2376` 连接独立的 Docker daemon。
+Backend connects to an isolated Docker daemon via `tcp://dind:2376`.
 
-### Socket 挂载模式（开发快捷）
+### Socket-Mount Mode (Fast for Local Development)
 
-默认行为（自动加载 `docker-compose.override.yml`）:
+Default behavior (auto-loads `docker-compose.override.yml`):
 
 ```bash
 docker compose up -d
 ```
 
-Backend 直接使用宿主机 Docker Socket，dind 容器不启动。
+Backend uses the host Docker socket directly, and the dind container is not started.
 
-## 常用命令
+## Common Commands
 
 ```bash
-# 查看容器状态
+# Check container status
 docker compose ps
 
-# 查看日志
+# Tail logs
 docker compose logs -f linkwork-backend
 
-# 仅重建某个服务
+# Rebuild one service only
 docker compose build linkwork-backend
 docker compose up -d linkwork-backend
 
-# 停止并删除（保留数据卷）
+# Stop and remove containers (keep volumes)
 docker compose down
 
-# 停止并删除（含数据卷，慎用）
+# Stop and remove containers + volumes (destructive)
 docker compose down -v
 ```
 
-## 镜像构建说明
+## Image Build Notes
 
-| 镜像 | 构建方式 | 说明 |
-|------|---------|------|
-| `linkwork-backend` | 三阶段 Maven | linkwork-server install → backend package → JRE runtime |
-| `linkwork-mcp-gateway` | 两阶段 Go | 已有 Dockerfile，Go build → alpine runtime |
-| `linkwork-web` | 两阶段 Node | Vite build → Nginx 静态服务 |
+| Image | Build Method | Notes |
+|------|--------------|-------|
+| `linkwork-backend` | 3-stage Maven build | linkwork-server install -> backend package -> JRE runtime |
+| `linkwork-mcp-gateway` | 2-stage Go build | existing Dockerfile, Go build -> alpine runtime |
+| `linkwork-web` | 2-stage Node build | Vite build -> Nginx static serving |
 
-构建上下文均为 `LinkWork/` 根目录（gateway 除外，使用自身目录）。
+Build context is `LinkWork/` repo root for all services except gateway (gateway uses its own directory as context).
